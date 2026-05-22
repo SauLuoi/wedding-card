@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+// app/api/admin/gallery/upload/route.ts
+
+import { NextResponse } from 'next/server';
+import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
 
 export const runtime = 'nodejs';
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
@@ -14,85 +15,34 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
       return NextResponse.json(
-        {
-          error: 'Không tìm thấy file',
-        },
-        {
-          status: 400,
-        }
+        { error: 'No file uploaded' },
+        { status: 400 }
       );
     }
 
-    // Validate size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        {
-          error: 'Ảnh vượt quá 50MB',
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // Validate image type
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/webp',
-    ];
-
-    if (!allowedMimeTypes.includes(file.type)) {
-      return NextResponse.json(
-        {
-          error: 'Chỉ hỗ trợ JPG, PNG, WEBP',
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // Convert file
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create upload folder
     const uploadDir = path.join(process.cwd(), 'public/uploads');
 
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, {
-        recursive: true,
-      });
-    }
+    await mkdir(uploadDir, { recursive: true });
 
-    // Generate file name
-    const timestamp = Date.now();
+    const fileName =
+      Date.now() + '-' + Math.random().toString(36).substring(2) + '.webp';
 
-    const originalName = file.name
-      .replace(/\.[^/.]+$/, '')
-      .replace(/\s+/g, '-')
-      .toLowerCase();
+    const outputPath = path.join(uploadDir, fileName);
 
-    const fileName = `${timestamp}-${originalName}.webp`;
-
-    const filePath = path.join(uploadDir, fileName);
-
-    // Convert -> WEBP + resize
     await sharp(buffer)
-      .rotate()
-      .resize({
-        width: 2000,
+      .resize(2000, 2000, {
+        fit: 'inside',
         withoutEnlargement: true,
       })
       .webp({
-        quality: 80,
+        quality: 85,
       })
-      .toFile(filePath);
+      .toFile(outputPath);
 
     return NextResponse.json({
-      success: true,
       url: `/uploads/${fileName}`,
     });
   } catch (error) {
@@ -100,11 +50,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        error: 'Upload thất bại',
+        error: String(error),
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
