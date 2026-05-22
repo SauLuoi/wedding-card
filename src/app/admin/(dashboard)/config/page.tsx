@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import imageCompression from 'browser-image-compression';
 import { Save, Upload, Link as LinkIcon, Heart, Calendar, Image as ImageIcon, Globe, QrCode } from 'lucide-react';
 
 interface WeddingConfig {
@@ -78,22 +79,22 @@ export default function ConfigPage() {
 
     if (!file || !config) return;
 
-    // Validate frontend
-    if (file.size > 50 * 1024 * 1024) {
-      setMessage({
-        text: 'Ảnh vượt quá 50MB',
-        type: 'error',
-      });
-
-      return;
-    }
-
     try {
-      setMessage(null);
+      // Compress + convert webp
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: 'image/webp',
+      });
 
       const formData = new FormData();
 
-      formData.append('file', file);
+      formData.append(
+        'file',
+        compressedFile,
+        `${Date.now()}.webp`
+      );
 
       const res = await fetch('/api/admin/gallery/upload', {
         method: 'POST',
@@ -102,29 +103,27 @@ export default function ConfigPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (res.ok && data.url) {
+        setConfig({
+          ...config,
+          [fieldName]: data.url,
+        });
+
+        setMessage({
+          text: 'Tải ảnh lên thành công!',
+          type: 'success',
+        });
+      } else {
         setMessage({
           text: data.error || 'Upload thất bại',
           type: 'error',
         });
-
-        return;
       }
-
-      setConfig({
-        ...config,
-        [fieldName]: data.url,
-      });
+    } catch (err) {
+      console.error(err);
 
       setMessage({
-        text: 'Upload ảnh thành công',
-        type: 'success',
-      });
-    } catch (error) {
-      console.error(error);
-
-      setMessage({
-        text: 'Có lỗi xảy ra khi upload',
+        text: 'Lỗi upload',
         type: 'error',
       });
     }
