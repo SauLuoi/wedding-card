@@ -70,28 +70,63 @@ export default function ConfigPage() {
     setConfig({ ...config, [name]: value });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof WeddingConfig) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: keyof WeddingConfig
+  ) => {
     const file = e.target.files?.[0];
+
     if (!file || !config) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
+    // Validate frontend
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage({
+        text: 'Ảnh vượt quá 10MB',
+        type: 'error',
+      });
+
+      return;
+    }
 
     try {
+      setMessage(null);
+
+      const formData = new FormData();
+
+      formData.append('file', file);
+
       const res = await fetch('/api/admin/gallery/upload', {
         method: 'POST',
         body: formData,
       });
+
       const data = await res.json();
-      if (res.ok && data.url) {
-        setConfig({ ...config, [fieldName]: data.url });
-        setMessage({ text: 'Tải ảnh lên thành công!', type: 'success' });
-      } else {
-        setMessage({ text: data.error || 'Tải ảnh lên thất bại', type: 'error' });
+
+      if (!res.ok) {
+        setMessage({
+          text: data.error || 'Upload thất bại',
+          type: 'error',
+        });
+
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setMessage({ text: 'Lỗi tải ảnh lên', type: 'error' });
+
+      setConfig({
+        ...config,
+        [fieldName]: data.url,
+      });
+
+      setMessage({
+        text: 'Upload ảnh thành công',
+        type: 'success',
+      });
+    } catch (error) {
+      console.error(error);
+
+      setMessage({
+        text: 'Có lỗi xảy ra khi upload',
+        type: 'error',
+      });
     }
   };
 
@@ -144,9 +179,8 @@ export default function ConfigPage() {
       </div>
 
       {message && (
-        <div className={`p-4 border rounded-2xl text-xs font-semibold ${
-          message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
-        }`}>
+        <div className={`p-4 border rounded-2xl text-xs font-semibold ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
           {message.text}
         </div>
       )}
@@ -163,24 +197,24 @@ export default function ConfigPage() {
             {/* Groom Name */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Họ tên chú rể</label>
-              <input 
-                type="text" 
-                name="groomName" 
+              <input
+                type="text"
+                name="groomName"
                 required
-                value={config.groomName} 
+                value={config.groomName}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
             </div>
-            
+
             {/* Bride Name */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Họ tên cô dâu</label>
-              <input 
-                type="text" 
-                name="brideName" 
+              <input
+                type="text"
+                name="brideName"
                 required
-                value={config.brideName} 
+                value={config.brideName}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -189,11 +223,11 @@ export default function ConfigPage() {
             {/* Groom Short Name */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên gọi ngắn chú rể (VD: Hoàng Minh)</label>
-              <input 
-                type="text" 
-                name="groomShortName" 
+              <input
+                type="text"
+                name="groomShortName"
                 required
-                value={config.groomShortName} 
+                value={config.groomShortName}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -202,11 +236,11 @@ export default function ConfigPage() {
             {/* Bride Short Name */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên gọi ngắn cô dâu (VD: Thảo Vy)</label>
-              <input 
-                type="text" 
-                name="brideShortName" 
+              <input
+                type="text"
+                name="brideShortName"
                 required
-                value={config.brideShortName} 
+                value={config.brideShortName}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -220,8 +254,8 @@ export default function ConfigPage() {
                   <img src={config.groomImage} className="w-16 h-16 rounded-xl object-cover border border-gold-200" />
                 )}
                 <div className="relative flex-1">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => handleFileUpload(e, 'groomImage')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -242,8 +276,8 @@ export default function ConfigPage() {
                   <img src={config.brideImage} className="w-16 h-16 rounded-xl object-cover border border-gold-200" />
                 )}
                 <div className="relative flex-1">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => handleFileUpload(e, 'brideImage')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -259,10 +293,10 @@ export default function ConfigPage() {
             {/* Groom bio text */}
             <div className="md:col-span-2">
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Giới thiệu về chú rể</label>
-              <textarea 
-                name="groomAbout" 
+              <textarea
+                name="groomAbout"
                 rows={3}
-                value={config.groomAbout} 
+                value={config.groomAbout}
                 onChange={handleChange}
                 placeholder="Câu tự giới thiệu ngắn của chú rể..."
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7] resize-none"
@@ -272,10 +306,10 @@ export default function ConfigPage() {
             {/* Bride bio text */}
             <div className="md:col-span-2">
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Giới thiệu về cô dâu</label>
-              <textarea 
-                name="brideAbout" 
+              <textarea
+                name="brideAbout"
                 rows={3}
-                value={config.brideAbout} 
+                value={config.brideAbout}
                 onChange={handleChange}
                 placeholder="Câu tự giới thiệu ngắn của cô dâu..."
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7] resize-none"
@@ -295,11 +329,11 @@ export default function ConfigPage() {
             {/* Wedding Date Picker */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Ngày giờ tổ chức tiệc</label>
-              <input 
-                type="datetime-local" 
-                name="weddingDate" 
+              <input
+                type="datetime-local"
+                name="weddingDate"
                 required
-                value={config.weddingDate} 
+                value={config.weddingDate}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -308,11 +342,11 @@ export default function ConfigPage() {
             {/* Venue name */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên nhà hàng/Địa điểm (VD: The Log Restaurant)</label>
-              <input 
-                type="text" 
-                name="locationName" 
+              <input
+                type="text"
+                name="locationName"
                 required
-                value={config.locationName} 
+                value={config.locationName}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -321,11 +355,11 @@ export default function ConfigPage() {
             {/* Address */}
             <div className="md:col-span-2">
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Địa chỉ cụ thể</label>
-              <input 
-                type="text" 
-                name="locationAddress" 
+              <input
+                type="text"
+                name="locationAddress"
                 required
-                value={config.locationAddress} 
+                value={config.locationAddress}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -334,10 +368,10 @@ export default function ConfigPage() {
             {/* Google map iframe embed */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Google Map Embed Link (Iframe src URL)</label>
-              <input 
-                type="text" 
-                name="googleMapsEmbedUrl" 
-                value={config.googleMapsEmbedUrl} 
+              <input
+                type="text"
+                name="googleMapsEmbedUrl"
+                value={config.googleMapsEmbedUrl}
                 onChange={handleChange}
                 placeholder="https://www.google.com/maps/embed?pb=..."
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
@@ -347,10 +381,10 @@ export default function ConfigPage() {
             {/* Direction link */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Đường link chỉ đường Google Map (Navigation Link)</label>
-              <input 
-                type="text" 
-                name="googleMapsDirectionUrl" 
-                value={config.googleMapsDirectionUrl} 
+              <input
+                type="text"
+                name="googleMapsDirectionUrl"
+                value={config.googleMapsDirectionUrl}
                 onChange={handleChange}
                 placeholder="https://maps.app.goo.gl/..."
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
@@ -375,8 +409,8 @@ export default function ConfigPage() {
                   <img src={config.heroImage} className="w-16 h-16 rounded-xl object-cover border border-gold-200" />
                 )}
                 <div className="relative flex-1">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => handleFileUpload(e, 'heroImage')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -393,17 +427,17 @@ export default function ConfigPage() {
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Màu chủ đạo thiệp cưới</label>
               <div className="flex items-center gap-4">
-                <input 
-                  type="color" 
-                  name="themeColor" 
-                  value={config.themeColor} 
+                <input
+                  type="color"
+                  name="themeColor"
+                  value={config.themeColor}
                   onChange={handleChange}
                   className="w-16 h-11 rounded-xl cursor-pointer border border-gray-200 outline-none bg-white p-1"
                 />
-                <input 
-                  type="text" 
-                  name="themeColor" 
-                  value={config.themeColor} 
+                <input
+                  type="text"
+                  name="themeColor"
+                  value={config.themeColor}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
                 />
@@ -415,10 +449,10 @@ export default function ConfigPage() {
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Nhạc nền (Link YouTube)</label>
               <div className="flex items-center gap-2">
                 <span className="text-gray-400"><LinkIcon className="w-4 h-4" /></span>
-                <input 
-                  type="text" 
-                  name="musicUrl" 
-                  value={config.musicUrl} 
+                <input
+                  type="text"
+                  name="musicUrl"
+                  value={config.musicUrl}
                   onChange={handleChange}
                   placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
@@ -430,9 +464,9 @@ export default function ConfigPage() {
             {/* Custom font selector */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Font chữ Serif tiêu đề</label>
-              <select 
-                name="fontFamily" 
-                value={config.fontFamily} 
+              <select
+                name="fontFamily"
+                value={config.fontFamily}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm bg-[#FDFBF7] focus:border-gold-400"
               >
@@ -447,11 +481,11 @@ export default function ConfigPage() {
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Địa chỉ đường dẫn thiệp (Slug URL)</label>
               <div className="flex items-center">
                 <span className="text-xs text-gray-400 px-3 py-2.5 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl select-all">/thiep/</span>
-                <input 
-                  type="text" 
-                  name="slug" 
+                <input
+                  type="text"
+                  name="slug"
                   required
-                  value={config.slug} 
+                  value={config.slug}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2.5 rounded-r-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
                 />
@@ -463,10 +497,10 @@ export default function ConfigPage() {
             {/* Story Text Title */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tiêu đề phần Giới thiệu (Love Story Title)</label>
-              <input 
-                type="text" 
-                name="aboutTitle" 
-                value={config.aboutTitle} 
+              <input
+                type="text"
+                name="aboutTitle"
+                value={config.aboutTitle}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
               />
@@ -474,10 +508,10 @@ export default function ConfigPage() {
             {/* Story Text Description */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Đoạn văn giới thiệu chung câu chuyện tình yêu</label>
-              <textarea 
-                name="aboutText" 
+              <textarea
+                name="aboutText"
                 rows={4}
-                value={config.aboutText} 
+                value={config.aboutText}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7] resize-none"
               />
@@ -496,11 +530,11 @@ export default function ConfigPage() {
             {/* SEO Title */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tiêu đề SEO (Meta Title)</label>
-              <input 
-                type="text" 
-                name="seoTitle" 
+              <input
+                type="text"
+                name="seoTitle"
                 required
-                value={config.seoTitle} 
+                value={config.seoTitle}
                 onChange={handleChange}
                 placeholder="VD: Hoàng Minh & Thảo Vy - Lời Mời Thành Hôn"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
@@ -510,11 +544,11 @@ export default function ConfigPage() {
             {/* SEO Description */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Mô tả SEO (Meta Description)</label>
-              <input 
-                type="text" 
-                name="seoDescription" 
+              <input
+                type="text"
+                name="seoDescription"
                 required
-                value={config.seoDescription} 
+                value={config.seoDescription}
                 onChange={handleChange}
                 placeholder="Đoạn mô tả hiển thị khi gửi link qua Zalo/Facebook..."
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
@@ -529,8 +563,8 @@ export default function ConfigPage() {
                   <img src={config.seoImage} className="w-24 h-16 rounded-xl object-cover border border-gold-200" />
                 )}
                 <div className="relative flex-1">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => handleFileUpload(e, 'seoImage')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -556,8 +590,8 @@ export default function ConfigPage() {
                   </div>
                 )}
                 <div className="relative flex-1">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*,.ico"
                     onChange={(e) => handleFileUpload(e, 'faviconUrl')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -584,13 +618,13 @@ export default function ConfigPage() {
             {/* Chú rể */}
             <div className="space-y-4 p-4 border border-gray-100 rounded-xl bg-gray-50/30">
               <h4 className="font-semibold text-sm text-gray-800 border-b border-gray-100 pb-2">Mừng cưới Chú rể</h4>
-              
+
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên ngân hàng</label>
-                <input 
-                  type="text" 
-                  name="groomBankName" 
-                  value={config.groomBankName} 
+                <input
+                  type="text"
+                  name="groomBankName"
+                  value={config.groomBankName}
                   onChange={handleChange}
                   placeholder="VD: Vietcombank (VCB)"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-white"
@@ -599,10 +633,10 @@ export default function ConfigPage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Số tài khoản</label>
-                <input 
-                  type="text" 
-                  name="groomAccountNumber" 
-                  value={config.groomAccountNumber} 
+                <input
+                  type="text"
+                  name="groomAccountNumber"
+                  value={config.groomAccountNumber}
                   onChange={handleChange}
                   placeholder="VD: 1012345678"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-white"
@@ -611,10 +645,10 @@ export default function ConfigPage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên chủ tài khoản</label>
-                <input 
-                  type="text" 
-                  name="groomAccountName" 
-                  value={config.groomAccountName} 
+                <input
+                  type="text"
+                  name="groomAccountName"
+                  value={config.groomAccountName}
                   onChange={handleChange}
                   placeholder="VD: LÊ HOÀNG MINH"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-white"
@@ -628,8 +662,8 @@ export default function ConfigPage() {
                     <img src={config.groomQrUrl} className="w-16 h-16 rounded-xl object-cover border border-gold-200 bg-white" />
                   )}
                   <div className="relative flex-1">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={(e) => handleFileUpload(e, 'groomQrUrl')}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -646,13 +680,13 @@ export default function ConfigPage() {
             {/* Cô dâu */}
             <div className="space-y-4 p-4 border border-gray-100 rounded-xl bg-gray-50/30">
               <h4 className="font-semibold text-sm text-gray-800 border-b border-gray-100 pb-2">Mừng cưới Cô dâu</h4>
-              
+
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên ngân hàng</label>
-                <input 
-                  type="text" 
-                  name="brideBankName" 
-                  value={config.brideBankName} 
+                <input
+                  type="text"
+                  name="brideBankName"
+                  value={config.brideBankName}
                   onChange={handleChange}
                   placeholder="VD: Techcombank (TCB)"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-white"
@@ -661,10 +695,10 @@ export default function ConfigPage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Số tài khoản</label>
-                <input 
-                  type="text" 
-                  name="brideAccountNumber" 
-                  value={config.brideAccountNumber} 
+                <input
+                  type="text"
+                  name="brideAccountNumber"
+                  value={config.brideAccountNumber}
                   onChange={handleChange}
                   placeholder="VD: 19012345678910"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-white"
@@ -673,10 +707,10 @@ export default function ConfigPage() {
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Tên chủ tài khoản</label>
-                <input 
-                  type="text" 
-                  name="brideAccountName" 
-                  value={config.brideAccountName} 
+                <input
+                  type="text"
+                  name="brideAccountName"
+                  value={config.brideAccountName}
                   onChange={handleChange}
                   placeholder="VD: NGUYỄN THẢO VY"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-white"
@@ -690,8 +724,8 @@ export default function ConfigPage() {
                     <img src={config.brideQrUrl} className="w-16 h-16 rounded-xl object-cover border border-gold-200 bg-white" />
                   )}
                   <div className="relative flex-1">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={(e) => handleFileUpload(e, 'brideQrUrl')}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

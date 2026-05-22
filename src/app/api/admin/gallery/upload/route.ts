@@ -1,67 +1,111 @@
-import { NextResponse } from 'next/server';
-import { checkApiAuth } from '@/lib/api-auth';
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
 
-// Route Segment Config
-export const maxDuration = 60;
-export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
-  const auth = await checkApiAuth();
-  if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+export async function POST(req: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
+    const formData = await req.formData();
+
+    const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    }
-
-    // Check file size: max 20MB
-    if (file.size > 20 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'File quá lớn. Tối đa 20MB.' },
-        { status: 413 }
+        {
+          error: 'Không tìm thấy file',
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    const timestamp = Date.now();
-    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-    const fileName = `${timestamp}_${cleanFileName}`;
-
-    // ── Vercel Blob (production) ──────────────────────────────────────────
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const { put } = await import('@vercel/blob');
-
-      const blob = await put(`uploads/${fileName}`, file, {
-        access: 'public',
-        contentType: file.type || 'application/octet-stream',
-      });
-
-      return NextResponse.json({ success: true, url: blob.url });
+    // Validate size
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        {
+          error: 'Ảnh vượt quá 10MB',
+        },
+        {
+          status: 400,
+        }
+      );
     }
 
-    // ── Local disk fallback (development) ────────────────────────────────
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
+    // Validate image type
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+    ];
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await fs.mkdir(uploadsDir, { recursive: true });
+    if (!allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json(
+        {
+          error: 'Chỉ hỗ trợ JPG, PNG, WEBP',
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
+    // Convert file
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const filePath = path.join(uploadsDir, fileName);
-    await fs.writeFile(filePath, buffer);
 
-    const relativeUrl = `/uploads/${fileName}`;
-    return NextResponse.json({ success: true, url: relativeUrl });
+    // Create upload folder
+    const uploadDir = path.join(process.cwd(), 'public/uploads');
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, {
+        recursive: true,
+      });
+    }
+
+    // Generate file name
+    const timestamp = Date.now();
+
+    const originalName = file.name
+      .replace(/\.[^/.]+$/, '')
+      .replace(/\s+/g, '-')
+      .toLowerCase();
+
+    const fileName = `${timestamp}-${originalName}.webp`;
+
+    const filePath = path.join(uploadDir, fileName);
+
+    // Convert -> WEBP + resize
+    await sharp(buffer)
+      .rotate()
+      .resize({
+        width: 2000,
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 80,
+      })
+      .toFile(filePath);
+
+    return NextResponse.json({
+      success: true,
+      url: `/uploads/${fileName}`,
+    });
   } catch (error) {
-    console.error('File Upload Error:', error);
+    console.error(error);
+
     return NextResponse.json(
-      { error: 'Lỗi khi tải ảnh lên. Vui lòng thử lại.' },
-      { status: 500 }
+      {
+        error: 'Upload thất bại',
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
