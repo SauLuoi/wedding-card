@@ -23,22 +23,42 @@ export async function generateMetadata(
     };
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const ogImageUrl = config.seoImage || config.heroImage;
+  const faviconUrl = (config as { faviconUrl?: string }).faviconUrl;
+
   return {
     title: config.seoTitle,
     description: config.seoDescription,
+    icons: faviconUrl
+      ? {
+          icon: faviconUrl,
+          shortcut: faviconUrl,
+          apple: faviconUrl,
+        }
+      : undefined,
     openGraph: {
       title: config.seoTitle,
       description: config.seoDescription,
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thiep/${slug}`,
-      images: [
-        {
-          url: config.seoImage || config.heroImage,
-          width: 1200,
-          height: 630,
-          alt: `${config.groomShortName} & ${config.brideShortName}`,
-        },
-      ],
+      url: `${appUrl}/thiep/${slug}`,
+      images: ogImageUrl
+        ? [
+            {
+              url: ogImageUrl,
+              width: 1200,
+              height: 630,
+              alt: `${config.groomShortName} & ${config.brideShortName}`,
+            },
+          ]
+        : [],
       type: 'website',
+      siteName: config.seoTitle,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: config.seoTitle,
+      description: config.seoDescription,
+      images: ogImageUrl ? [ogImageUrl] : [],
     },
   };
 }

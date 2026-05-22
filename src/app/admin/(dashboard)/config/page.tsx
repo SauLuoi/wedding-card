@@ -20,6 +20,7 @@ interface WeddingConfig {
   seoTitle: string;
   seoDescription: string;
   seoImage: string;
+  faviconUrl: string;
   heroImage: string;
   aboutTitle: string;
   aboutText: string;
@@ -409,9 +410,9 @@ export default function ConfigPage() {
               </div>
             </div>
 
-            {/* Background Music Link */}
+            {/* Background Music Link - YouTube */}
             <div>
-              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Nhạc nền (URL MP3 file)</label>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Nhạc nền (Link YouTube)</label>
               <div className="flex items-center gap-2">
                 <span className="text-gray-400"><LinkIcon className="w-4 h-4" /></span>
                 <input 
@@ -419,10 +420,11 @@ export default function ConfigPage() {
                   name="musicUrl" 
                   value={config.musicUrl} 
                   onChange={handleChange}
-                  placeholder="https://example.com/song.mp3"
+                  placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm focus:border-gold-400 bg-[#FDFBF7]"
                 />
               </div>
+              <p className="text-[10px] text-gray-400 mt-1.5">Dán link YouTube bất kỳ — hệ thống sẽ tự động lấy âm thanh để phát nền.</p>
             </div>
 
             {/* Custom font selector */}
@@ -521,7 +523,7 @@ export default function ConfigPage() {
 
             {/* SEO Image Upload */}
             <div className="md:col-span-2">
-              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Ảnh xem trước khi chia sẻ link (OG Image)</label>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Ảnh xem trước khi chia sẻ link (OG Image 1200×630)</label>
               <div className="flex items-center gap-4">
                 {config.seoImage && (
                   <img src={config.seoImage} className="w-24 h-16 rounded-xl object-cover border border-gold-200" />
@@ -535,10 +537,38 @@ export default function ConfigPage() {
                   />
                   <div className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-xs text-gray-500 hover:bg-gold-50/20">
                     <Upload className="w-4 h-4" />
-                    <span>Tải ảnh lên</span>
+                    <span>Tải ảnh OG lên</span>
                   </div>
                 </div>
               </div>
+              <p className="text-[10px] text-gray-400 mt-1.5">Ảnh hiển thị khi chia sẻ link qua Zalo, Facebook, iMessage... Nên dùng ảnh ngang tỷ lệ 1200×630px.</p>
+            </div>
+
+            {/* Favicon Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Favicon (icon tab trình duyệt)</label>
+              <div className="flex items-center gap-4">
+                {config.faviconUrl ? (
+                  <img src={config.faviconUrl} className="w-10 h-10 rounded-lg object-contain border border-gold-200 bg-gray-50" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-300">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                )}
+                <div className="relative flex-1">
+                  <input 
+                    type="file" 
+                    accept="image/*,.ico"
+                    onChange={(e) => handleFileUpload(e, 'faviconUrl')}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 text-xs text-gray-500 hover:bg-gold-50/20">
+                    <Upload className="w-4 h-4" />
+                    <span>Tải favicon lên (.ico / .png / .jpg)</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1.5">Icon hiển thị ở tab trình duyệt và khi bookmark trang. Nên dùng ảnh vuông 32×32px hoặc 64×64px.</p>
             </div>
           </div>
         </div>

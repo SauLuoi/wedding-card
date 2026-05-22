@@ -61,6 +61,7 @@ interface WeddingData {
   fontFamily: string;
   seoTitle: string;
   seoDescription: string;
+  faviconUrl?: string;
   heroImage: string;
   aboutTitle: string;
   aboutText: string;
@@ -202,6 +203,36 @@ export default function WeddingInvitationClient({ data }: { data: WeddingData })
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Minimal YouTube Player interface (avoids @types/youtube)
+  interface YTPlayer {
+    playVideo(): void;
+    pauseVideo(): void;
+    destroy(): void;
+  }
+  interface YTWindow extends Window {
+    YT?: { Player: new (el: HTMLDivElement, opts: object) => YTPlayer };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+
+  const youtubePlayerRef = useRef<YTPlayer | null>(null);
+  const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Helper: extract YouTube video ID from various URL formats
+  const getYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/shorts\/([^&\n?#]+)/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
+  const isYouTubeUrl = (url: string) => !!getYouTubeVideoId(url);
+
   // Parse wedding date
   const targetDate = new Date(data.weddingDate);
 
@@ -223,13 +254,56 @@ export default function WeddingInvitationClient({ data }: { data: WeddingData })
     return () => clearInterval(interval);
   }, [data.weddingDate]);
 
-  // Audio setup
+  // Audio / YouTube setup
   useEffect(() => {
-    if (data.musicUrl) {
+    if (!data.musicUrl) return;
+
+    if (isYouTubeUrl(data.musicUrl)) {
+      // Load YouTube IFrame API
+      const loadYTApi = () => {
+        if ((window as unknown as YTWindow).YT?.Player) {
+          initYTPlayer();
+        } else {
+          const tag = document.createElement('script');
+          tag.src = 'https://www.youtube.com/iframe_api';
+          document.head.appendChild(tag);
+          (window as unknown as YTWindow).onYouTubeIframeAPIReady = initYTPlayer;
+        }
+      };
+
+      const initYTPlayer = () => {
+        const videoId = getYouTubeVideoId(data.musicUrl);
+        if (!videoId || !youtubeContainerRef.current) return;
+        const yt = (window as unknown as YTWindow).YT;
+        if (!yt?.Player) return;
+        youtubePlayerRef.current = new yt.Player(youtubeContainerRef.current, {
+          videoId,
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            loop: 1,
+            playlist: videoId,
+            rel: 0,
+            modestbranding: 1,
+            iv_load_policy: 3,
+          },
+          events: {
+            onReady: () => {},
+          },
+        });
+      };
+
+      loadYTApi();
+
+      return () => {
+        youtubePlayerRef.current?.destroy();
+        youtubePlayerRef.current = null;
+      };
+    } else {
+      // Fallback: plain MP3 audio
       const audio = new Audio(data.musicUrl);
       audio.loop = true;
       audioRef.current = audio;
-      
       return () => {
         audio.pause();
         audioRef.current = null;
@@ -265,7 +339,10 @@ export default function WeddingInvitationClient({ data }: { data: WeddingData })
     }));
     setParticles(generated);
 
-    if (audioRef.current) {
+    if (youtubePlayerRef.current) {
+      try { youtubePlayerRef.current.playVideo(); } catch {}
+      setIsPlaying(true);
+    } else if (audioRef.current) {
       audioRef.current.play()
         .then(() => setIsPlaying(true))
         .catch(err => console.log('Audio autoplay blocked:', err));
@@ -276,6 +353,18 @@ export default function WeddingInvitationClient({ data }: { data: WeddingData })
   };
 
   const toggleMusic = () => {
+    if (youtubePlayerRef.current) {
+      try {
+        if (isPlaying) {
+          youtubePlayerRef.current.pauseVideo();
+          setIsPlaying(false);
+        } else {
+          youtubePlayerRef.current.playVideo();
+          setIsPlaying(true);
+        }
+      } catch { /* ignore */ }
+      return;
+    }
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
@@ -359,6 +448,23 @@ export default function WeddingInvitationClient({ data }: { data: WeddingData })
 
   return (
     <div className="relative min-h-screen selection:bg-gold-200">
+      {/* Hidden YouTube IFrame Player container */}
+      {data.musicUrl && isYouTubeUrl(data.musicUrl) && (
+        <div
+          ref={youtubeContainerRef}
+          style={{
+            position: 'fixed',
+            bottom: '-1px',
+            right: '-1px',
+            width: '1px',
+            height: '1px',
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: -1,
+          }}
+        />
+      )}
+
       {/* Background audio controller */}
       {isOpen && data.musicUrl && (
         <button 

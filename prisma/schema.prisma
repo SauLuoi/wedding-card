@@ -36,6 +36,7 @@ model WeddingConfig {
   seoTitle               String
   seoDescription         String
   seoImage               String          @default("")
+  faviconUrl             String          @default("")
   viewsCount             Int             @default(0)
   heroImage              String          @default("")
   aboutTitle             String          @default("Love Story")
