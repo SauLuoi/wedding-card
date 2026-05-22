@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-serif: var(--font-playfair), serif;
+  --font-sans: var(--font-inter), sans-serif;
+  
+  --color-gold-50: #fbf8eb;
+  --color-gold-100: #f4ecce;
+  --color-gold-200: #e8d89e;
+  --color-gold-300: #dac06b;
+  --color-gold-400: #cca842;
+  --color-gold-500: #b8922e;
+  --color-gold-600: #977322;
+  --color-gold-700: #76561b;
+  --color-gold-800: #5c4217;
+  --color-gold-900: #4c3616;
+  --color-gold-950: #2c1d0a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #fdfbf7;
+  color: #1a1a1a;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #fdfbf7;
+}
+::-webkit-scrollbar-thumb {
+  background: #dac06b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8922e;
+}
+
+/* Luxury border styles */
+.border-gold {
+  border-color: #dac06b;
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #b8922e 0%, #dac06b 50%, #b8922e 100%);
+}
+
+.gold-text-gradient {
+  background: linear-gradient(135deg, #977322 0%, #dac06b 50%, #977322 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Cinematic overlay */
+.cinematic-overlay {
+  background: linear-gradient(to bottom, rgba(26,26,26,0.3) 0%, rgba(26,26,26,0.7) 100%);
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(253, 251, 247, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(218, 192, 107, 0.25);
+}
+
+.dark-glass-card {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(218, 192, 107, 0.15);
+}
+
+/* Sparkle particles helper */
+.sparkle {
+  position: absolute;
+  background: radial-gradient(circle, #fff 10%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatUp 8s linear infinite;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Infinite wishes scroll banner */
+.marquee-container {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: 20px;
+}
+
+.marquee-content {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  min-width: 100%;
+  gap: 20px;
+  animation: scroll-marquee 40s linear infinite;
+}
+
+@keyframes scroll-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}

@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WeddingConfig {
+  id                     String          @id @default(cuid())
+  slug                   String          @unique
+  brideName              String
+  brideShortName         String
+  groomName              String
+  groomShortName         String
+  weddingDate            DateTime
+  locationName           String
+  locationAddress        String
+  googleMapsEmbedUrl     String
+  googleMapsDirectionUrl String
+  musicUrl               String          @default("")
+  themeColor             String          @default("#d4af37") // Default luxury gold
+  fontFamily             String          @default("Playfair Display")
+  seoTitle               String
+  seoDescription         String
+  seoImage               String          @default("")
+  viewsCount             Int             @default(0)
+  heroImage              String          @default("")
+  aboutTitle             String          @default("Love Story")
+  aboutText              String          @default("We are excited to share our story with you...")
+  brideAbout             String          @default("")
+  groomAbout             String          @default("")
+  brideImage             String          @default("")
+  groomImage             String          @default("")
+  groomQrUrl             String          @default("")
+  groomBankName          String          @default("")
+  groomAccountNumber     String          @default("")
+  groomAccountName       String          @default("")
+  brideQrUrl             String          @default("")
+  brideBankName          String          @default("")
+  brideAccountNumber     String          @default("")
+  brideAccountName       String          @default("")
+  timeline               StoryTimeline[]
+  gallery                GalleryImage[]
+  rsvps                  Rsvp[]
+  wishes                 Wish[]
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+}
+
+model StoryTimeline {
+  id              String        @id @default(cuid())
+  weddingConfigId String
+  weddingConfig   WeddingConfig @relation(fields: [weddingConfigId], references: [id], onDelete: Cascade)
+  dateString      String
+  title           String
+  description     String
+  imageUrl        String        @default("")
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model GalleryImage {
+  id              String        @id @default(cuid())
+  weddingConfigId String
+  weddingConfig   WeddingConfig @relation(fields: [weddingConfigId], references: [id], onDelete: Cascade)
+  url             String
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Rsvp {
+  id              String        @id @default(cuid())
+  weddingConfigId String
+  weddingConfig   WeddingConfig @relation(fields: [weddingConfigId], references: [id], onDelete: Cascade)
+  name            String
+  phone           String
+  guestsCount     Int           @default(1)
+  wishes          String        @default("")
+  createdAt       DateTime      @default(now())
+}
+
+model Wish {
+  id              String        @id @default(cuid())
+  weddingConfigId String
+  weddingConfig   WeddingConfig @relation(fields: [weddingConfigId], references: [id], onDelete: Cascade)
+  name            String
+  content         String
+  isApproved      Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+}
