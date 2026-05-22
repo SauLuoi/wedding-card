@@ -5,7 +5,7 @@ import sharp from 'sharp';
 
 export const runtime = 'nodejs';
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; //2GB
 
 export async function POST(req: NextRequest) {
   try {
