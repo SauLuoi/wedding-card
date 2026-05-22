@@ -5,8 +5,7 @@ import sharp from 'sharp';
 
 export const runtime = 'nodejs';
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; //2GB
-
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         {
-          error: 'Ảnh vượt quá 2GB',
+          error: 'Ảnh vượt quá 50MB',
         },
         {
           status: 400,

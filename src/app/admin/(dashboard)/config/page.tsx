@@ -79,9 +79,9 @@ export default function ConfigPage() {
     if (!file || !config) return;
 
     // Validate frontend
-    if (file.size > 2 * 1024 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       setMessage({
-        text: 'Ảnh vượt quá 2GB',
+        text: 'Ảnh vượt quá 50MB',
         type: 'error',
       });
 
