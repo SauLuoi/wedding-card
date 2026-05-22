@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         {
-          error: 'Ảnh vượt quá 10MB',
+          error: 'Ảnh vượt quá 2GB',
         },
         {
           status: 400,
